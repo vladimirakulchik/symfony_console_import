@@ -8,6 +8,6 @@ services:
     #    class: AppBundle\Directory\ClassName
     #    arguments: ['@another_service_name', 'plain_value', '%parameter_name%']
 
-    app.import_csv:
-            class:     AppBundle\Service\ImportCSV
-            arguments: []
+    importer.csv:
+            class:     AppBundle\Service\ImporterCSV
+            arguments: ['@doctrine.orm.entity_manager', '@validator']

@@ -59,6 +59,52 @@ class ProductData
     private $productDataId;
 
     /**
+     * @var integer
+     *
+     * @ORM\Column(name="intStock", type="integer", precision=12, options={"unsigned"=true}, nullable=false)
+     */
+    private $stock;
+
+    /**
+     * @var float
+     *
+     * @ORM\Column(name="decCost", type="decimal", precision=12, scale=4, nullable=false)
+     */
+    private $cost;
+
+    /**
+     * @return int
+     */
+    public function getStock()
+    {
+        return $this->stock;
+    }
+
+    /**
+     * @param int $stock
+     */
+    public function setStock($stock)
+    {
+        $this->stock = $stock;
+    }
+
+    /**
+     * @return float
+     */
+    public function getCost()
+    {
+        return $this->cost;
+    }
+
+    /**
+     * @param float $cost
+     */
+    public function setCost($cost)
+    {
+        $this->cost = $cost;
+    }
+
+    /**
      * @return string
      */
     public function getProductName()
