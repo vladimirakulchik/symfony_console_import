@@ -2,14 +2,21 @@
 
 namespace AppBundle\Validator\Constraints;
 
+use AppBundle\Entity\ProductData;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 
 class CostOrStockGreaterThanValidator extends ConstraintValidator
 {
+    /**
+     * Checks if the passed value is valid.
+     *
+     * @param $value
+     * @param Constraint $constraint
+     */
     public function validate($value, Constraint $constraint)
     {
-        if ($value === null) {
+        if (!$value instanceof ProductData) {
             return;
         }
 
@@ -17,14 +24,8 @@ class CostOrStockGreaterThanValidator extends ConstraintValidator
             return;
         }
 
-        $stockValue = $this->context->getRoot()['stock'];
-
-        if ($stockValue === null) {
-            return;
-        }
-
-        $costValue = (float)$value;
-        $stockValue = (float)$stockValue;
+        $costValue = $value->getCost();
+        $stockValue = $value->getStock();
         $constraintCost = $constraint->cost;
         $constraintStock = $constraint->stock;
 

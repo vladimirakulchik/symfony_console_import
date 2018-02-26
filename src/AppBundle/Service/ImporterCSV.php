@@ -2,82 +2,159 @@
 
 namespace AppBundle\Service;
 
-use Doctrine\ORM\EntityManager;
+use AppBundle\Entity\ProductData;
+use AppBundle\Helper\ImportResult;
 use Symfony\Component\Validator\Validator\RecursiveValidator;
-use Port\Steps\StepAggregator;
+use Doctrine\ORM\EntityManager;
 use Port\Csv\CsvReader;
 use Port\Doctrine\DoctrineWriter;
-use Port\Steps\Step\MappingStep;
-use Port\Steps\Step\ConverterStep;
-use Port\Steps\Step\FilterStep;
-use Port\Filter\ValidatorFilter;
-use Symfony\Component\Validator\Constraints as Assert;
-use AppBundle\Validator\Constraints as AppAssert;
-use AppBundle\Converter\DateTimeConverter;
 
 class ImporterCSV
 {
     const ENTITY_PATH = 'AppBundle\Entity\ProductData';
-    const ENTITY_PRODUCT_NAME = 'productName';
-    const ENTITY_PRODUCT_DESCRIPTION = 'productDesc';
-    const ENTITY_PRODUCT_CODE = 'productCode';
-    const ENTITY_STOCK = 'stock';
-    const ENTITY_COST = 'cost';
-    const ENTITY_DISCONTINUED = 'dtmDiscontinued';
-    const ENTITY_DTM_ADDED = 'dtmAdded';
 
-    const FILE_PRODUCT_NAME = 'Product Name';
-    const FILE_PRODUCT_DESCRIPTION = 'Product Description';
-    const FILE_PRODUCT_CODE = 'Product Code';
-    const FILE_STOCK = 'Stock';
-    const FILE_COST = 'Cost in GBP';
-    const FILE_DISCONTINUED = 'Discontinued';
+    /**
+     * @var EntityManager
+     */
+    private $manager;
 
-    const MAX_COST = 1000;
-    const MIN_COST = 5;
-    const MIN_STOCK = 10;
+    /**
+     * @var RecursiveValidator
+     */
+    private $validator;
 
-    protected $manager;
-    protected $validator;
+    /**
+     * @var CsvReader
+     */
+    private $reader;
 
+    /**
+     * @var DoctrineWriter
+     */
+    private $writer;
+
+    /**
+     * @var ImportResult
+     */
+    private $result;
+
+    /**
+     * ImporterCSV constructor.
+     *
+     * @param EntityManager $manager
+     * @param RecursiveValidator $validator
+     */
     public function __construct(EntityManager $manager, RecursiveValidator $validator)
     {
         $this->manager = $manager;
         $this->validator = $validator;
     }
 
-    public function import($filename)
+    /**
+     * Perform import data.
+     *
+     * @param $filename
+     * @return ImportResult|null
+     */
+    public function perform($filename)
     {
         if (!($path = realpath($filename))) {
-            print_r('Error');
-            return;
+            return null;
         }
 
-        $workflow = $this->createWorkflow($path);
-        $workflow->addStep($this->createMappingStep());
-        $workflow->addStep($this->createConverterStep());
+        $this->result = new ImportResult();
+        $this->reader = $this->createReader($path);
+        $this->writer = $this->createWriter();
+        $this->writer->prepare();
+        $this->importData();
+        $this->writer->finish();
 
-        $filter = $this->createValidatorFilter();
-        $workflow->addStep($this->createFilterStep($filter));
-
-        try {
-            $result = $workflow->process();
-        } catch (\Exception $e) {
-            echo $e;
-        }
+        return $this->result;
     }
 
-    private function createWorkflow($path)
+    /**
+     * Import data to database.
+     */
+    private function importData()
     {
-        $reader = $this->createReader($path);
-        $writer = $this->createWriter();
-
-        $workflow = new StepAggregator($reader);
-        $workflow->addWriter($writer);
-
-        return $workflow;
+        foreach ($this->reader as $row) {
+            try {
+                $product = ProductData::create($row);
+                $this->validateProduct($product);
+                $this->writeProduct($product);
+                $this->result->incrementSuccessfulCount();
+            } catch (\Exception $e) {
+                $this->result->addSkippedItem($row);
+            }
+        }
     }
 
+    /**
+     * Perform import data in test mode.
+     *
+     * @param $filename
+     * @return ImportResult|null
+     */
+    public function testPerform($filename)
+    {
+        if (!($path = realpath($filename))) {
+            return null;
+        }
+
+        $this->result = new ImportResult();
+        $this->reader = $this->createReader($path);
+        $this->testImportData();
+
+        return $this->result;
+    }
+
+    /**
+     * Import data to database in test mode.
+     */
+    public function testImportData()
+    {
+        foreach ($this->reader as $row) {
+            try {
+                $product = ProductData::create($row);
+                $this->validateProduct($product);
+                $this->result->incrementSuccessfulCount();
+            } catch (\Exception $e) {
+                $this->result->addSkippedItem($row);
+            }
+        }
+    }
+
+    /**
+     * Validate product data with constraints.
+     *
+     * @param ProductData $product
+     * @throws \Exception
+     */
+    private function validateProduct(ProductData $product)
+    {
+        $errors = $this->validator->validate($product);
+        if (count($errors) > 0) {
+            throw new \Exception();
+        }
+    }
+
+    /**
+     * Write product data to database.
+     *
+     * @param ProductData $product
+     */
+    private function writeProduct(ProductData $product)
+    {
+        $this->writer->writeItem($product->toArray());
+        $this->writer->flush();
+    }
+
+    /**
+     * Create CSV Reader.
+     *
+     * @param string $path
+     * @return CsvReader
+     */
     private function createReader($path)
     {
         $file = new \SplFileObject($path);
@@ -87,81 +164,13 @@ class ImporterCSV
         return $reader;
     }
 
+    /**
+     * Create writer for database.
+     *
+     * @return DoctrineWriter
+     */
     private function createWriter()
     {
         return new DoctrineWriter($this->manager, self::ENTITY_PATH);
-    }
-
-    private function createMappingStep()
-    {
-        $mappingStep = new MappingStep();
-
-        $mappingStep->map(
-            $this->getFormatName(self::FILE_PRODUCT_NAME),
-            $this->getFormatName(self::ENTITY_PRODUCT_NAME)
-        );
-        $mappingStep->map(
-            $this->getFormatName(self::FILE_PRODUCT_DESCRIPTION),
-            $this->getFormatName(self::ENTITY_PRODUCT_DESCRIPTION)
-        );
-        $mappingStep->map(
-            $this->getFormatName(self::FILE_PRODUCT_CODE),
-            $this->getFormatName(self::ENTITY_PRODUCT_CODE)
-        );
-        $mappingStep->map(
-            $this->getFormatName(self::FILE_STOCK),
-            $this->getFormatName(self::ENTITY_STOCK)
-        );
-        $mappingStep->map(
-            $this->getFormatName(self::FILE_COST),
-            $this->getFormatName(self::ENTITY_COST)
-        );
-        $mappingStep->map(
-            $this->getFormatName(self::FILE_DISCONTINUED),
-            $this->getFormatName(self::ENTITY_DISCONTINUED)
-        );
-
-        return $mappingStep;
-    }
-
-    private function getFormatName($name)
-    {
-        return sprintf('[%s]', $name);
-    }
-
-    private function createFilterStep(ValidatorFilter $filter)
-    {
-        $filterStep = new FilterStep();
-        $filterStep->add($filter);
-
-        return $filterStep;
-    }
-
-    private function createValidatorFilter()
-    {
-        $filter = new ValidatorFilter($this->validator);
-
-        $filter->add(self::ENTITY_PRODUCT_NAME, new Assert\NotNull());
-        $filter->add(self::ENTITY_PRODUCT_DESCRIPTION, new Assert\NotNull());
-        $filter->add(self::ENTITY_PRODUCT_CODE, new Assert\NotNull());
-        $filter->add(self::ENTITY_DTM_ADDED, new Assert\DateTime());
-        $filter->add(self::ENTITY_DISCONTINUED, new Assert\NotIdenticalTo(''));
-        $filter->add(self::ENTITY_STOCK, new Assert\NotNull());
-        $filter->add(self::ENTITY_COST, new Assert\NotNull());
-        $filter->add(self::ENTITY_COST, new Assert\LessThanOrEqual(self::MAX_COST));
-        $filter->add(self::ENTITY_COST, new AppAssert\CostOrStockGreaterThan(array(
-            'cost' => self::MIN_COST,
-            'stock' => self::MIN_STOCK,
-        )));
-
-        return $filter;
-    }
-
-    private function createConverterStep()
-    {
-        $converterStep = new ConverterStep();
-        $converterStep->add(new DateTimeConverter());
-
-        return $converterStep;
     }
 }

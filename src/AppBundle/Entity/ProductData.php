@@ -3,22 +3,51 @@
 namespace AppBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
+use AppBundle\Validator\Constraints as AppAssert;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 /**
- * @ORM\Table(name="tblProductData", uniqueConstraints={@ORM\UniqueConstraint(name="strProductCode", columns={"strProductCode"})})
+ * @AppAssert\CostOrStockGreaterThan(cost = 5, stock = 10)
+ *
+ * @ORM\Table(name="tblProductData",
+ *     uniqueConstraints={@ORM\UniqueConstraint(name="strProductCode", columns={"strProductCode"})})
  * @ORM\Entity
+ *
+ * @UniqueEntity("productCode")
  */
 class ProductData
 {
+    const FILE_PRODUCT_NAME = 'Product Name';
+    const FILE_PRODUCT_DESCRIPTION = 'Product Description';
+    const FILE_PRODUCT_CODE = 'Product Code';
+    const FILE_STOCK = 'Stock';
+    const FILE_COST = 'Cost in GBP';
+    const FILE_DISCONTINUED = 'Discontinued';
+    const DISCONTINUED_MARK = 'yes';
+    
     /**
-     * @var string
+     * @var integer
      *
-     * @ORM\Column(name="strProductName", type="string", length=50, nullable=false)
+     * @ORM\Column(name="intProductDataId", type="integer", options={"unsigned"=true})
+     * @ORM\Id
+     * @ORM\GeneratedValue(strategy="IDENTITY")
      */
-    private $productName;
+    private $productDataId;
 
     /**
      * @var string
+     *
+     * @Assert\NotBlank()
+     *
+     * @ORM\Column(name="strProductName", type="string", length=50, nullable=false)
+     */
+    public $productName;
+
+    /**
+     * @var string
+     *
+     * @Assert\NotBlank()
      *
      * @ORM\Column(name="strProductDesc", type="string", length=255, nullable=false)
      */
@@ -27,12 +56,16 @@ class ProductData
     /**
      * @var string
      *
+     * @Assert\NotBlank()
+     *
      * @ORM\Column(name="strProductCode", type="string", length=10, nullable=false)
      */
     private $productCode;
 
     /**
      * @var \DateTime
+     *
+     * @Assert\DateTime()
      *
      * @ORM\Column(name="dtmAdded", type="datetime", nullable=true)
      */
@@ -41,25 +74,25 @@ class ProductData
     /**
      * @var \DateTime
      *
+     * @Assert\NotIdenticalTo("")
+     *
      * @ORM\Column(name="dtmDiscontinued", type="datetime", nullable=true)
      */
     private $dtmDiscontinued;
 
     /**
+     * @Assert\IsNull()
+     *
      * @ORM\Column(name="stmTimestamp", type="datetime", nullable=false)
      * @ORM\Version
      */
     private $timestamp;
 
     /**
-     * @ORM\Column(name="intProductDataId", type="integer", options={"unsigned"=true})
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
-     */
-    private $productDataId;
-
-    /**
      * @var integer
+     *
+     * @Assert\NotNull()
+     * @Assert\GreaterThan(0)
      *
      * @ORM\Column(name="intStock", type="integer", precision=12, options={"unsigned"=true}, nullable=false)
      */
@@ -68,40 +101,58 @@ class ProductData
     /**
      * @var float
      *
+     * @Assert\NotNull()
+     * @Assert\LessThanOrEqual(1000)
+     *
      * @ORM\Column(name="decCost", type="decimal", precision=12, scale=4, nullable=false)
      */
     private $cost;
 
     /**
-     * @return int
+     * ProductData constructor.
      */
-    public function getStock()
+    public function __construct()
     {
-        return $this->stock;
     }
 
     /**
-     * @param int $stock
+     * ProductData constructor.
+     *
+     * @param array $data
+     * @return ProductData
      */
-    public function setStock($stock)
+    public static function create($data)
     {
-        $this->stock = $stock;
+        $product = new self();
+        $product->productName = $data[self::FILE_PRODUCT_NAME];
+        $product->productDesc = $data[self::FILE_PRODUCT_DESCRIPTION];
+        $product->productCode = $data[self::FILE_PRODUCT_CODE];
+        $product->dtmAdded = new \DateTime();
+
+        $product->stock = is_numeric($data[self::FILE_STOCK]) ? (integer)$data[self::FILE_STOCK] : null;
+        $product->cost = is_numeric($data[self::FILE_COST]) ? (float)$data[self::FILE_COST] : null;
+        $product->dtmDiscontinued =
+            $data[self::FILE_DISCONTINUED] == self::DISCONTINUED_MARK ? new \DateTime() : null;
+
+        return $product;
     }
 
     /**
-     * @return float
+     * Convert object to array.
+     *
+     * @return array
      */
-    public function getCost()
+    public function toArray()
     {
-        return $this->cost;
+        return get_object_vars($this);
     }
 
     /**
-     * @param float $cost
+     * @return mixed
      */
-    public function setCost($cost)
+    public function getProductDataId()
     {
-        $this->cost = $cost;
+        return $this->productDataId;
     }
 
     /**
@@ -201,10 +252,34 @@ class ProductData
     }
 
     /**
-     * @return mixed
+     * @return int
      */
-    public function getProductDataId()
+    public function getStock()
     {
-        return $this->productDataId;
+        return $this->stock;
+    }
+
+    /**
+     * @param int $stock
+     */
+    public function setStock($stock)
+    {
+        $this->stock = $stock;
+    }
+
+    /**
+     * @return float
+     */
+    public function getCost()
+    {
+        return $this->cost;
+    }
+
+    /**
+     * @param float $cost
+     */
+    public function setCost($cost)
+    {
+        $this->cost = $cost;
     }
 }
