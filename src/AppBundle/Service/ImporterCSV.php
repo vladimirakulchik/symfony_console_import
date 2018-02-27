@@ -48,6 +48,7 @@ class ImporterCSV
     {
         $this->manager = $manager;
         $this->validator = $validator;
+        $this->result = new ImportResult();
     }
 
     /**
@@ -62,18 +63,18 @@ class ImporterCSV
             return null;
         }
 
-        $this->result = new ImportResult();
         $this->reader = $this->createReader($path);
         $this->writer = $this->createWriter();
         $this->writer->prepare();
         $this->importData();
         $this->writer->finish();
+        $this->addWrongItems();
 
         return $this->result;
     }
 
     /**
-     * Import data to database.
+     * Validate and import data to database.
      */
     private function importData()
     {
@@ -101,17 +102,17 @@ class ImporterCSV
             return null;
         }
 
-        $this->result = new ImportResult();
         $this->reader = $this->createReader($path);
         $this->testImportData();
+        $this->addWrongItems();
 
         return $this->result;
     }
 
     /**
-     * Import data to database in test mode.
+     * Validate and import data to database in test mode.
      */
-    public function testImportData()
+    private function testImportData()
     {
         foreach ($this->reader as $row) {
             try {
@@ -122,6 +123,31 @@ class ImporterCSV
                 $this->result->addSkippedItem($row);
             }
         }
+    }
+
+    /**
+     * Create CSV Reader.
+     *
+     * @param string $path
+     * @return CsvReader
+     */
+    private function createReader($path)
+    {
+        $file = new \SplFileObject($path);
+        $reader = new CsvReader($file);
+        $reader->setHeaderRowNumber(0);
+
+        return $reader;
+    }
+
+    /**
+     * Create writer for database.
+     *
+     * @return DoctrineWriter
+     */
+    private function createWriter()
+    {
+        return new DoctrineWriter($this->manager, self::ENTITY_PATH);
     }
 
     /**
@@ -150,27 +176,12 @@ class ImporterCSV
     }
 
     /**
-     * Create CSV Reader.
-     *
-     * @param string $path
-     * @return CsvReader
+     * Add wrong items to import result.
      */
-    private function createReader($path)
+    private function addWrongItems()
     {
-        $file = new \SplFileObject($path);
-        $reader = new CsvReader($file);
-        $reader->setHeaderRowNumber(0);
-
-        return $reader;
-    }
-
-    /**
-     * Create writer for database.
-     *
-     * @return DoctrineWriter
-     */
-    private function createWriter()
-    {
-        return new DoctrineWriter($this->manager, self::ENTITY_PATH);
+        if ($this->reader->hasErrors()) {
+            $this->result->addWrongItems($this->reader->getErrors());
+        }
     }
 }

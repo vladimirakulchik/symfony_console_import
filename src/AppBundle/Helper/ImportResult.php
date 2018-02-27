@@ -10,11 +10,6 @@ class ImportResult
     private $successfulCount;
 
     /**
-     * @var integer
-     */
-    private $skippedCount;
-
-    /**
      * @var array
      */
     private $skippedItems;
@@ -25,7 +20,6 @@ class ImportResult
     public function __construct()
     {
         $this->successfulCount = 0;
-        $this->skippedCount = 0;
         $this->skippedItems = array();
     }
 
@@ -46,7 +40,7 @@ class ImportResult
      */
     public function getSkippedCount()
     {
-        return $this->skippedCount;
+        return count($this->skippedItems);
     }
 
     /**
@@ -56,7 +50,7 @@ class ImportResult
      */
     public function getProcessedCount()
     {
-        return $this->successfulCount + $this->skippedCount;
+        return $this->getSuccessfulCount() + $this->getSkippedCount();
     }
 
     /**
@@ -84,7 +78,20 @@ class ImportResult
      */
     public function addSkippedItem($row)
     {
-        $this->skippedCount++;
-        $this->skippedItems[] = implode(",", $row);
+        if ($row != null) {
+            $this->skippedItems[] = implode(",", $row);
+        }
+    }
+
+    /**
+     * Add array of wrong items.
+     *
+     * @param array $errors
+     */
+    public function addWrongItems($errors)
+    {
+        foreach ($errors as $row) {
+            $this->addSkippedItem($row);
+        }
     }
 }
