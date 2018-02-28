@@ -9,38 +9,74 @@ use Symfony\Component\Console\Tester\CommandTester;
 
 class ImportCommandTest extends KernelTestCase
 {
-    public function testExecuteErrorFilename()
+    const FILE_PATH = "/home/ITRANSITION.CORP/v.akulchik/Documents/Symfony/stock.csv";
+
+    /**
+     * @var CommandTester
+     */
+    private $commandTester;
+
+    private $commandName;
+
+    public function setUp()
     {
         self::bootKernel();
         $application = new Application(self::$kernel);
         $application->add(new ImportCommand());
+
         $command = $application->find('app:import');
+        $this->commandName = $command->getName();
+        $this->commandTester = new CommandTester($command);
+    }
 
-        $commandTester = new CommandTester($command);
-        $commandTester->execute(array(
-            'command' => $command->getName(),
-            'filename' => 'testfile',
-        ));
+    public function testExecuteErrorFilenameTestMode()
+    {
+        $this->executeCommandTestMode('testfile', 'test');
 
-        $output = $commandTester->getDisplay();
+        $output = $this->commandTester->getDisplay();
+        $this->assertContains('Please, enter correct filename.', $output);
+    }
+
+    public function testExecuteErrorFilename()
+    {
+        $this->executeCommand('testfile');
+
+        $output = $this->commandTester->getDisplay();
         $this->assertContains('Please, enter correct filename.', $output);
     }
 
     public function testExecuteTestMode()
     {
-        self::bootKernel();
-        $application = new Application(self::$kernel);
-        $application->add(new ImportCommand());
-        $command = $application->find('app:import');
+        $this->executeCommandTestMode(self::FILE_PATH, 'test');
 
-        $commandTester = new CommandTester($command);
-        $commandTester->execute(array(
-            'command' => $command->getName(),
-            'filename' => "/home/ITRANSITION.CORP/v.akulchik/Documents/Symfony/stock.csv",
-            'test' => 'test',
-        ));
-
-        $output = $commandTester->getDisplay();
+        $output = $this->commandTester->getDisplay();
         $this->assertContains('Complete.', $output);
+        $this->assertContains('Processed items: 29', $output);
+    }
+
+    public function testExecute()
+    {
+        $this->executeCommand(self::FILE_PATH);
+
+        $output = $this->commandTester->getDisplay();
+        $this->assertContains('Complete.', $output);
+        $this->assertContains('Processed items: ', $output);
+    }
+
+    private function executeCommand($filename)
+    {
+        $this->commandTester->execute(array(
+            'command' => $this->commandName,
+            'filename' => $filename,
+        ));
+    }
+
+    private function executeCommandTestMode($filename, $testMode)
+    {
+        $this->commandTester->execute(array(
+            'command' => $this->commandName,
+            'filename' => $filename,
+            'test' => $testMode,
+        ));
     }
 }
