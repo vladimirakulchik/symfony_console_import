@@ -42,7 +42,7 @@ class ProductData
      *
      * @ORM\Column(name="strProductName", type="string", length=50, nullable=false)
      */
-    public $productName;
+    private $productName;
 
     /**
      * @var string
