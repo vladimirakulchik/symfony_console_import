@@ -1,18 +1,17 @@
 <?php
+declare(strict_types=1);
 
 namespace AppBundle\Service;
 
-use AppBundle\Entity\ProductData;
+use AppBundle\Entity\Product;
 use AppBundle\Helper\ImportResult;
-use Symfony\Component\Validator\Validator\RecursiveValidator;
 use Doctrine\ORM\EntityManager;
 use Port\Csv\CsvReader;
 use Port\Doctrine\DoctrineWriter;
+use Symfony\Component\Validator\Validator\RecursiveValidator;
 
-class ImporterCSV
+abstract class ImporterCSV
 {
-    const ENTITY_PATH = 'AppBundle\Entity\ProductData';
-
     /**
      * @var EntityManager
      */
@@ -24,116 +23,66 @@ class ImporterCSV
     private $validator;
 
     /**
+     * @var EntityConverter
+     */
+    protected $converter;
+
+    /**
      * @var CsvReader
      */
-    private $reader;
+    protected $reader;
 
     /**
      * @var DoctrineWriter
      */
-    private $writer;
+    protected $writer;
+
+    /**
+     * @var integer
+     */
+    private $pendingItemsCount;
 
     /**
      * @var ImportResult
      */
-    private $result;
+    protected $result;
 
     /**
      * ImporterCSV constructor.
      *
      * @param EntityManager $manager
      * @param RecursiveValidator $validator
+     * @param EntityConverter $converter
      */
-    public function __construct(EntityManager $manager, RecursiveValidator $validator)
+    public function __construct(EntityManager $manager, RecursiveValidator $validator, EntityConverter $converter)
     {
         $this->manager = $manager;
         $this->validator = $validator;
+        $this->converter = $converter;
         $this->result = new ImportResult();
     }
 
     /**
-     * Perform import data.
+     * Perform process of import.
      *
-     * @param $filename
-     * @return ImportResult|null
+     * @param \SplFileObject $file
+     * @return ImportResult
      */
-    public function perform($filename)
-    {
-        if (!($path = realpath($filename))) {
-            return null;
-        }
-
-        $this->reader = $this->createReader($path);
-        $this->writer = $this->createWriter();
-        $this->writer->prepare();
-        $this->importData();
-        $this->writer->finish();
-        $this->addWrongItems();
-
-        return $this->result;
-    }
+    abstract public function perform(\SplFileObject $file): ImportResult;
 
     /**
-     * Validate and import data to database.
+     * Process data from CSV file.
      */
-    private function importData()
-    {
-        foreach ($this->reader as $row) {
-            try {
-                $product = ProductData::create($row);
-                $this->validateProduct($product);
-                $this->writeProduct($product);
-                $this->result->incrementSuccessfulCount();
-            } catch (\Exception $e) {
-                $this->result->addSkippedItem($row);
-            }
-        }
-    }
-
-    /**
-     * Perform import data in test mode.
-     *
-     * @param $filename
-     * @return ImportResult|null
-     */
-    public function testPerform($filename)
-    {
-        if (!($path = realpath($filename))) {
-            return null;
-        }
-
-        $this->reader = $this->createReader($path);
-        $this->testImportData();
-        $this->addWrongItems();
-
-        return $this->result;
-    }
-
-    /**
-     * Validate and import data to database in test mode.
-     */
-    private function testImportData()
-    {
-        foreach ($this->reader as $row) {
-            try {
-                $product = ProductData::create($row);
-                $this->validateProduct($product);
-                $this->result->incrementSuccessfulCount();
-            } catch (\Exception $e) {
-                $this->result->addSkippedItem($row);
-            }
-        }
-    }
+    abstract protected function processData(): void;
 
     /**
      * Create CSV Reader.
      *
-     * @param string $path
+     * @param \SplFileObject $file
      * @return CsvReader
      */
-    private function createReader($path)
+    protected function createReader(\SplFileObject $file): CsvReader
     {
-        $file = new \SplFileObject($path);
         $reader = new CsvReader($file);
         $reader->setHeaderRowNumber(0);
 
@@ -145,18 +94,20 @@ class ImporterCSV
      *
      * @return DoctrineWriter
      */
-    private function createWriter()
+    protected function createWriter(): DoctrineWriter
     {
-        return new DoctrineWriter($this->manager, self::ENTITY_PATH);
+        $this->pendingItemsCount = 0;
+
+        return new DoctrineWriter($this->manager, Product::class);
     }
 
     /**
      * Validate product data with constraints.
      *
-     * @param ProductData $product
+     * @param Product $product
      * @throws \Exception
      */
-    private function validateProduct(ProductData $product)
+    protected function validateProduct(Product $product): void
     {
         $errors = $this->validator->validate($product);
         if (count($errors) > 0) {
@@ -167,18 +118,23 @@ class ImporterCSV
     /**
      * Write product data to database.
      *
-     * @param ProductData $product
+     * @param Product $product
      */
-    private function writeProduct(ProductData $product)
+    protected function writeProduct(Product $product): void
     {
         $this->writer->writeItem($product->toArray());
-        $this->writer->flush();
+        $this->pendingItemsCount++;
+
+        if ($this->pendingItemsCount == 100) {
+            $this->writer->flush();
+            $this->pendingItemsCount = 0;
+        }
     }
 
     /**
      * Add wrong items to import result.
      */
-    private function addWrongItems()
+    protected function addWrongItems(): void
     {
         if ($this->reader->hasErrors()) {
             $this->result->addWrongItems($this->reader->getErrors());

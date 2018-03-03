@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace AppBundle\Command;
 
@@ -12,9 +13,14 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 class ImportCommand extends ContainerAwareCommand
 {
     /**
+     * @var SymfonyStyle
+     */
+    private $io;
+
+    /**
      * Command configuration.
      */
-    protected function configure()
+    protected function configure(): void
     {
         $this
             ->setName('app:import')
@@ -30,43 +36,53 @@ class ImportCommand extends ContainerAwareCommand
      *
      * @param InputInterface $input
      * @param OutputInterface $output
-     * @return int|null|void
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): void
     {
-        $importer = $this->getContainer()->get('importer.csv');
+        $this->io = new SymfonyStyle($input, $output);
 
         $filename = $input->getArgument('filename');
 
-        if (($input->hasArgument('test')) &&
-            ($input->getArgument('test') == 'test')) {
-                $result = $importer->testPerform($filename);
-        } else {
-            $result = $importer->perform($filename);
+        try {
+            $file = new \SplFileObject($filename);
+        } catch (\Exception $e) {
+            $this->showFilenameError();
+            return;
         }
 
-        $this->showResult(new SymfonyStyle($input, $output), $result);
+        if (($input->hasArgument('test')) &&
+            ($input->getArgument('test') == 'test')) {
+            $importer = $this->getContainer()->get('importer.csv.test');
+        } else {
+            $importer = $this->getContainer()->get('importer.csv');
+        }
+
+        $result = $importer->perform($file);
+        $this->showResult($result);
     }
 
     /**
      * Show result of command.
      *
-     * @param SymfonyStyle $io
-     * @param $result
+     * @param ImportResult $result
      */
-    private function showResult(SymfonyStyle $io, $result)
+    private function showResult(ImportResult $result): void
     {
-        if ($result instanceof ImportResult) {
-            $io->success('Complete.');
-            $io->writeln('Processed items: ' . $result->getProcessedCount());
-            $io->writeln('Successful: ' . $result->getSuccessfulCount());
-            $io->writeln('Skipped: ' . $result->getSkippedCount());
+        $this->io->success('Complete.');
+        $this->io->writeln('Processed items: ' . $result->getProcessedCount());
+        $this->io->writeln('Successful: ' . $result->getSuccessfulCount());
+        $this->io->writeln('Skipped: ' . $result->getSkippedCount());
 
-            $io->warning('Skipped rows:');
-            $io->text($result->getSkippedItems());
-            $io->writeln('');
-        } else {
-            $io->error('Please, enter correct filename.');
-        }
+        $this->io->warning('Skipped rows:');
+        $this->io->text($result->getSkippedItems());
+        $this->io->writeln('');
+    }
+
+    /**
+     * Show filename error message.
+     */
+    private function showFilenameError(): void
+    {
+        $this->io->error('Please, enter correct filename.');
     }
 }

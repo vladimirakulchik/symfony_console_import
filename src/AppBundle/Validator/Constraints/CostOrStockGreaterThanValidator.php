@@ -1,8 +1,9 @@
 <?php
+declare(strict_types=1);
 
 namespace AppBundle\Validator\Constraints;
 
-use AppBundle\Entity\ProductData;
+use AppBundle\Entity\Product;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 
@@ -14,9 +15,9 @@ class CostOrStockGreaterThanValidator extends ConstraintValidator
      * @param $value
      * @param Constraint $constraint
      */
-    public function validate($value, Constraint $constraint)
+    public function validate($value, Constraint $constraint): void
     {
-        if (!$value instanceof ProductData) {
+        if (!$value instanceof Product) {
             return;
         }
 
@@ -24,8 +25,8 @@ class CostOrStockGreaterThanValidator extends ConstraintValidator
             return;
         }
 
-        $costValue = $value->getCost();
-        $stockValue = $value->getStock();
+        $costValue = (float)$value->getCost();
+        $stockValue = (float)$value->getStock();
         $constraintCost = $constraint->cost;
         $constraintStock = $constraint->stock;
 
@@ -39,9 +40,15 @@ class CostOrStockGreaterThanValidator extends ConstraintValidator
         }
     }
 
-    private function compareValues($value1, $value2)
+    /**
+     * Is first number less than second.
+     *
+     * @param float $value1
+     * @param float $value2
+     * @return bool
+     */
+    private function compareValues(float $value1, float $value2): bool
     {
         return $value1 < $value2;
     }
-
 }

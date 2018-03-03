@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace AppBundle\Entity;
 
@@ -16,16 +17,8 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
  *
  * @UniqueEntity("productCode")
  */
-class ProductData
+class Product
 {
-    const FILE_PRODUCT_NAME = 'Product Name';
-    const FILE_PRODUCT_DESCRIPTION = 'Product Description';
-    const FILE_PRODUCT_CODE = 'Product Code';
-    const FILE_STOCK = 'Stock';
-    const FILE_COST = 'Cost in GBP';
-    const FILE_DISCONTINUED = 'Discontinued';
-    const DISCONTINUED_MARK = 'yes';
-    
     /**
      * @var integer
      *
@@ -81,6 +74,8 @@ class ProductData
     private $dtmDiscontinued;
 
     /**
+     * @var string
+     *
      * @Assert\IsNull()
      *
      * @ORM\Column(name="stmTimestamp", type="datetime", nullable=false)
@@ -102,6 +97,7 @@ class ProductData
      * @var float
      *
      * @Assert\NotNull()
+     * @Assert\GreaterThan(0)
      * @Assert\LessThanOrEqual(1000)
      *
      * @ORM\Column(name="decCost", type="decimal", precision=12, scale=4, nullable=false)
@@ -109,32 +105,10 @@ class ProductData
     private $cost;
 
     /**
-     * ProductData constructor.
+     * Product constructor.
      */
     public function __construct()
     {
-    }
-
-    /**
-     * ProductData constructor.
-     *
-     * @param array $data
-     * @return ProductData
-     */
-    public static function create($data)
-    {
-        $product = new self();
-        $product->productName = $data[self::FILE_PRODUCT_NAME];
-        $product->productDesc = $data[self::FILE_PRODUCT_DESCRIPTION];
-        $product->productCode = $data[self::FILE_PRODUCT_CODE];
-        $product->dtmAdded = new \DateTime();
-
-        $product->stock = is_numeric($data[self::FILE_STOCK]) ? (integer)$data[self::FILE_STOCK] : null;
-        $product->cost = is_numeric($data[self::FILE_COST]) ? (float)$data[self::FILE_COST] : null;
-        $product->dtmDiscontinued =
-            $data[self::FILE_DISCONTINUED] == self::DISCONTINUED_MARK ? new \DateTime() : null;
-
-        return $product;
     }
 
     /**
@@ -142,15 +116,15 @@ class ProductData
      *
      * @return array
      */
-    public function toArray()
+    public function toArray(): array
     {
         return get_object_vars($this);
     }
 
     /**
-     * @return mixed
+     * @return int
      */
-    public function getProductDataId()
+    public function getProductDataId(): int
     {
         return $this->productDataId;
     }
@@ -158,7 +132,7 @@ class ProductData
     /**
      * @return string
      */
-    public function getProductName()
+    public function getProductName(): string
     {
         return $this->productName;
     }
@@ -166,7 +140,7 @@ class ProductData
     /**
      * @param string $productName
      */
-    public function setProductName($productName)
+    public function setProductName(string $productName): void
     {
         $this->productName = $productName;
     }
@@ -174,7 +148,7 @@ class ProductData
     /**
      * @return string
      */
-    public function getProductDesc()
+    public function getProductDesc(): string
     {
         return $this->productDesc;
     }
@@ -182,7 +156,7 @@ class ProductData
     /**
      * @param string $productDesc
      */
-    public function setProductDesc($productDesc)
+    public function setProductDesc(string $productDesc): void
     {
         $this->productDesc = $productDesc;
     }
@@ -190,7 +164,7 @@ class ProductData
     /**
      * @return string
      */
-    public function getProductCode()
+    public function getProductCode(): string
     {
         return $this->productCode;
     }
@@ -198,15 +172,15 @@ class ProductData
     /**
      * @param string $productCode
      */
-    public function setProductCode($productCode)
+    public function setProductCode(string $productCode): void
     {
         $this->productCode = $productCode;
     }
 
     /**
-     * @return \DateTime
+     * @return \DateTime|null
      */
-    public function getDtmAdded()
+    public function getDtmAdded():? \DateTime
     {
         return $this->dtmAdded;
     }
@@ -214,15 +188,15 @@ class ProductData
     /**
      * @param \DateTime $dtmAdded
      */
-    public function setDtmAdded($dtmAdded)
+    public function setDtmAdded(\DateTime $dtmAdded): void
     {
         $this->dtmAdded = $dtmAdded;
     }
 
     /**
-     * @return \DateTime
+     * @return \DateTime|null
      */
-    public function getDtmDiscontinued()
+    public function getDtmDiscontinued():? \DateTime
     {
         return $this->dtmDiscontinued;
     }
@@ -230,31 +204,31 @@ class ProductData
     /**
      * @param \DateTime $dtmDiscontinued
      */
-    public function setDtmDiscontinued($dtmDiscontinued)
+    public function setDtmDiscontinued(\DateTime $dtmDiscontinued): void
     {
         $this->dtmDiscontinued = $dtmDiscontinued;
     }
 
     /**
-     * @return mixed
+     * @return null|string
      */
-    public function getTimestamp()
+    public function getTimestamp():? string
     {
         return $this->timestamp;
     }
 
     /**
-     * @param mixed $timestamp
+     * @param string $timestamp
      */
-    public function setTimestamp($timestamp)
+    public function setTimestamp(string $timestamp): void
     {
         $this->timestamp = $timestamp;
     }
 
     /**
-     * @return int
+     * @return int|null
      */
-    public function getStock()
+    public function getStock():? int
     {
         return $this->stock;
     }
@@ -262,15 +236,15 @@ class ProductData
     /**
      * @param int $stock
      */
-    public function setStock($stock)
+    public function setStock(int $stock): void
     {
         $this->stock = $stock;
     }
 
     /**
-     * @return float
+     * @return float|null
      */
-    public function getCost()
+    public function getCost():? float
     {
         return $this->cost;
     }
@@ -278,7 +252,7 @@ class ProductData
     /**
      * @param float $cost
      */
-    public function setCost($cost)
+    public function setCost(float $cost): void
     {
         $this->cost = $cost;
     }

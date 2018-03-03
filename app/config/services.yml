@@ -1,13 +1,23 @@
 # Learn more about services, parameters and containers at
 # https://symfony.com/doc/current/service_container.html
 parameters:
-    #parameter_name: value
+    file_product_name: Product Name
+    file_product_description: Product Description
+    file_product_code: Product Code
+    file_stock: Stock
+    file_cost: Cost in GBP
+    file_discontinued: Discontinued
+    discontinued_mark: yes
 
 services:
-    #service_name:
-    #    class: AppBundle\Directory\ClassName
-    #    arguments: ['@another_service_name', 'plain_value', '%parameter_name%']
-
     importer.csv:
-            class:     AppBundle\Service\ImporterCSV
-            arguments: ['@doctrine.orm.entity_manager', '@validator']
+        class: AppBundle\Service\ImporterFileCSV
+        arguments: ['@doctrine.orm.entity_manager', '@validator', '@entity.converter']
+
+    importer.csv.test:
+        class: AppBundle\Service\ImporterTestCSV
+        arguments: ['@doctrine.orm.entity_manager', '@validator', '@entity.converter']
+
+    entity.converter:
+        class: AppBundle\Service\EntityConverter
+        arguments: ['%file_product_name%','%file_product_description%','%file_product_code%','%file_stock%','%file_cost%','%file_discontinued%','%discontinued_mark%']

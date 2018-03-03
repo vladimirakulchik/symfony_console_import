@@ -1,8 +1,9 @@
 <?php
+declare(strict_types=1);
 
 namespace AppBundle\Tests\Entity;
 
-use AppBundle\Entity\ProductData;
+use AppBundle\Entity\Product;
 use PHPUnit\Framework\TestCase;
 
 class ProductDataTest extends TestCase
@@ -16,26 +17,26 @@ class ProductDataTest extends TestCase
 
     public function testCreateFromData()
     {
-        $data = array(
-            ProductData::FILE_PRODUCT_CODE => self::PRODUCT_CODE,
-            ProductData::FILE_PRODUCT_NAME => self::PRODUCT_NAME,
-            ProductData::FILE_PRODUCT_DESCRIPTION => self::PRODUCT_DESCRIPTION,
-            ProductData::FILE_STOCK => self::PRODUCT_STOCK,
-            ProductData::FILE_COST => self::PRODUCT_COST,
-            ProductData::FILE_DISCONTINUED => self::PRODUCT_DISCONTINUED
-        );
+        $data = [
+            Product::FILE_PRODUCT_CODE => self::PRODUCT_CODE,
+            Product::FILE_PRODUCT_NAME => self::PRODUCT_NAME,
+            Product::FILE_PRODUCT_DESCRIPTION => self::PRODUCT_DESCRIPTION,
+            Product::FILE_STOCK => self::PRODUCT_STOCK,
+            Product::FILE_COST => self::PRODUCT_COST,
+            Product::FILE_DISCONTINUED => self::PRODUCT_DISCONTINUED
+        ];
 
-        $product = ProductData::create($data);
-        $this->assertInstanceOf('AppBundle\Entity\ProductData', $product);
+        $product = Product::create($data);
+        $this->assertInstanceOf('AppBundle\Entity\Product', $product);
 
         return $product;
     }
 
     /**
      * @depends testCreateFromData
-     * @param ProductData $product
+     * @param Product $product
      */
-    public function testGetters(ProductData $product)
+    public function testGetters(Product $product)
     {
         $this->assertEquals(self::PRODUCT_CODE, $product->getProductCode());
         $this->assertEquals(self::PRODUCT_NAME, $product->getProductName());
@@ -46,9 +47,9 @@ class ProductDataTest extends TestCase
     }
     /**
      * @depends testCreateFromData
-     * @param ProductData $product
+     * @param Product $product
      */
-    public function testToArray(ProductData $product)
+    public function testToArray(Product $product)
     {
         $data = $product->toArray();
         $this->assertInternalType('array', $data);

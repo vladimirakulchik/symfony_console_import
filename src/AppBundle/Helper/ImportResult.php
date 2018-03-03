@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace AppBundle\Helper;
 
@@ -20,7 +21,7 @@ class ImportResult
     public function __construct()
     {
         $this->successfulCount = 0;
-        $this->skippedItems = array();
+        $this->skippedItems = [];
     }
 
     /**
@@ -28,7 +29,7 @@ class ImportResult
      *
      * @return int
      */
-    public function getSuccessfulCount()
+    public function getSuccessfulCount(): int
     {
         return $this->successfulCount;
     }
@@ -38,7 +39,7 @@ class ImportResult
      *
      * @return int
      */
-    public function getSkippedCount()
+    public function getSkippedCount(): int
     {
         return count($this->skippedItems);
     }
@@ -48,7 +49,7 @@ class ImportResult
      *
      * @return int
      */
-    public function getProcessedCount()
+    public function getProcessedCount(): int
     {
         return $this->getSuccessfulCount() + $this->getSkippedCount();
     }
@@ -58,7 +59,7 @@ class ImportResult
      *
      * @return array
      */
-    public function getSkippedItems()
+    public function getSkippedItems(): array
     {
         return $this->skippedItems;
     }
@@ -66,7 +67,7 @@ class ImportResult
     /**
      * Increment count of successful items.
      */
-    public function incrementSuccessfulCount()
+    public function incrementSuccessfulCount(): void
     {
         $this->successfulCount++;
     }
@@ -76,19 +77,19 @@ class ImportResult
      *
      * @param array $row
      */
-    public function addSkippedItem($row)
+    public function addSkippedItem(array $row): void
     {
         if ($row != null) {
-            $this->skippedItems[] = implode(",", $row);
+            $this->skippedItems[] = implode(',', $row);
         }
     }
 
     /**
-     * Add array of wrong items.
+     * Add array of wrong items
      *
      * @param array $errors
      */
-    public function addWrongItems($errors)
+    public function addWrongItems(array $errors): void
     {
         foreach ($errors as $row) {
             $this->addSkippedItem($row);

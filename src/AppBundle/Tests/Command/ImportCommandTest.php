@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace AppBundle\Tests\Command;
 
@@ -65,18 +66,18 @@ class ImportCommandTest extends KernelTestCase
 
     private function executeCommand($filename)
     {
-        $this->commandTester->execute(array(
+        $this->commandTester->execute([
             'command' => $this->commandName,
             'filename' => $filename,
-        ));
+        ]);
     }
 
     private function executeCommandTestMode($filename, $testMode)
     {
-        $this->commandTester->execute(array(
+        $this->commandTester->execute([
             'command' => $this->commandName,
             'filename' => $filename,
             'test' => $testMode,
-        ));
+        ]);
     }
 }

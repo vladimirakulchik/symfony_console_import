@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace AppBundle\Validator\Constraints;
 
@@ -26,7 +27,7 @@ class CostOrStockGreaterThan extends Constraint
      *
      * @return string
      */
-    public function getDefaultOption()
+    public function getDefaultOption(): string
     {
         return 'cost';
     }
@@ -36,18 +37,18 @@ class CostOrStockGreaterThan extends Constraint
      *
      * @return array
      */
-    public function getRequiredOptions()
+    public function getRequiredOptions(): array
     {
-        return array('cost', 'stock');
+        return ['cost', 'stock'];
     }
 
     /**
      * Returns whether the constraint can be put onto classes, properties or
      * both.
      *
-     * @return array|string
+     * @return string
      */
-    public function getTargets()
+    public function getTargets(): string
     {
         return self::CLASS_CONSTRAINT;
     }
