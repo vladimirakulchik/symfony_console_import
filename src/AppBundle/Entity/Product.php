@@ -132,7 +132,7 @@ class Product
     /**
      * @return string
      */
-    public function getProductName(): string
+    public function getProductName():? string
     {
         return $this->productName;
     }
@@ -148,7 +148,7 @@ class Product
     /**
      * @return string
      */
-    public function getProductDesc(): string
+    public function getProductDesc():? string
     {
         return $this->productDesc;
     }
@@ -164,7 +164,7 @@ class Product
     /**
      * @return string
      */
-    public function getProductCode(): string
+    public function getProductCode():? string
     {
         return $this->productCode;
     }
