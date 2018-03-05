@@ -9,7 +9,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class ImporterFileCSVTest extends KernelTestCase
 {
-    const FILE_PATH = '/home/ITRANSITION.CORP/v.akulchik/Documents/Symfony/stock.csv';
+    const FILE_PATH = '/stock.csv';
 
     /**
      * @var ImporterFileCSV
@@ -24,7 +24,8 @@ class ImporterFileCSVTest extends KernelTestCase
 
     public function testPerform(): void
     {
-        $file = new \SplFileObject(self::FILE_PATH);
+        $filePath = getcwd() . self::FILE_PATH;
+        $file = new \SplFileObject($filePath);
         $result = $this->importerFile->perform($file);
         $this->assertInstanceOf(ImportResult::class, $result);
         $this->assertGreaterThan(0, $result->getProcessedCount());

@@ -37,7 +37,7 @@ class ImportCommand extends ContainerAwareCommand
      * @param InputInterface $input
      * @param OutputInterface $output
      */
-    protected function execute(InputInterface $input, OutputInterface $output): void
+    public function execute(InputInterface $input, OutputInterface $output): void
     {
         $this->io = new SymfonyStyle($input, $output);
 
@@ -71,10 +71,14 @@ class ImportCommand extends ContainerAwareCommand
         $this->io->success('Complete.');
         $this->io->writeln('Processed items: ' . $result->getProcessedCount());
         $this->io->writeln('Successful: ' . $result->getSuccessfulCount());
-        $this->io->writeln('Skipped: ' . $result->getSkippedCount());
+        $skippedCount = $result->getSkippedCount();
+        $this->io->writeln('Skipped: ' . $skippedCount);
 
-        $this->io->warning('Skipped rows:');
-        $this->io->text($result->getSkippedItems());
+        if ($skippedCount > 0) {
+            $this->io->warning('Skipped rows:');
+            $this->io->text($result->getSkippedItems());
+        }
+
         $this->io->writeln('');
     }
 
