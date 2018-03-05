@@ -7,24 +7,51 @@ use AppBundle\Entity\Product;
 
 class EntityConverter
 {
+    /**
+     * @var string
+     */
     private $name;
+
+    /**
+     * @var string
+     */
     private $description;
+
+    /**
+     * @var string
+     */
     private $code;
+
+    /**
+     * @var string
+     */
     private $stock;
+
+    /**
+     * @var string
+     */
     private $cost;
+
+    /**
+     * @var string
+     */
     private $discontinued;
+
+    /**
+     * @var string
+     */
     private $discontinuedMark;
 
     /**
      * EntityConverter constructor.
      *
-     * @param $name
-     * @param $description
-     * @param $code
-     * @param $stock
-     * @param $cost
-     * @param $discontinued
-     * @param $discontinuedMark
+     * @param string $name
+     * @param string $description
+     * @param string $code
+     * @param string $stock
+     * @param string $cost
+     * @param string $discontinued
+     * @param string $discontinuedMark
      */
     public function __construct(
         string $name,

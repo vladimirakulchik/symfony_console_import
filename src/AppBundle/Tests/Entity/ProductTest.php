@@ -4,10 +4,14 @@ declare(strict_types=1);
 namespace AppBundle\Tests\Entity;
 
 use AppBundle\Entity\Product;
+use PHPUnit\Framework\TestCase;
 
-class ProductTest extends \PHPUnit_Framework_TestCase
+class ProductTest extends TestCase
 {
-    public function test__construct()
+    /**
+     * @return Product
+     */
+    public function test__construct(): Product
     {
         $product = new Product();
         $this->assertInstanceOf(Product::class, $product);
@@ -19,7 +23,7 @@ class ProductTest extends \PHPUnit_Framework_TestCase
      * @depends test__construct
      * @param Product $product
      */
-    public function testToArray(Product $product)
+    public function testToArray(Product $product): void
     {
         $array = $product->toArray();
         $this->assertInternalType('array', $array);

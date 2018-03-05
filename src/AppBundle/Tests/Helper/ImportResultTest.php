@@ -4,10 +4,14 @@ declare(strict_types=1);
 namespace AppBundle\Tests\Helper;
 
 use AppBundle\Helper\ImportResult;
+use PHPUnit\Framework\TestCase;
 
-class ImportResultTest extends \PHPUnit_Framework_TestCase
+class ImportResultTest extends TestCase
 {
-    public function test__construct()
+    /**
+     * @return ImportResult
+     */
+    public function test__construct(): ImportResult
     {
         $result = new ImportResult();
         $this->assertInstanceOf(ImportResult::class, $result);
@@ -19,7 +23,7 @@ class ImportResultTest extends \PHPUnit_Framework_TestCase
      * @depends test__construct
      * @param ImportResult $result
      */
-    public function testGetSuccessfulCount(ImportResult $result)
+    public function testGetSuccessfulCount(ImportResult $result): void
     {
         $this->assertEquals(0, $result->getSuccessfulCount());
     }
@@ -28,7 +32,7 @@ class ImportResultTest extends \PHPUnit_Framework_TestCase
      * @depends test__construct
      * @param ImportResult $result
      */
-    public function testGetSkippedCount(ImportResult $result)
+    public function testGetSkippedCount(ImportResult $result): void
     {
         $this->assertEquals(0, $result->getSkippedCount());
     }
@@ -37,7 +41,7 @@ class ImportResultTest extends \PHPUnit_Framework_TestCase
      * @depends test__construct
      * @param ImportResult $result
      */
-    public function testGetProcessedCount(ImportResult $result)
+    public function testGetProcessedCount(ImportResult $result): void
     {
         $this->assertEquals(0, $result->getProcessedCount());
     }
@@ -46,14 +50,14 @@ class ImportResultTest extends \PHPUnit_Framework_TestCase
      * @depends test__construct
      * @param ImportResult $result
      */
-    public function testGetSkippedItems(ImportResult $result)
+    public function testGetSkippedItems(ImportResult $result): void
     {
         $items = $result->getSkippedItems();
         $this->assertInternalType('array', $items);
         $this->assertEmpty($items);
     }
 
-    public function testIncrementSuccessfulCount()
+    public function testIncrementSuccessfulCount(): void
     {
         $result = new ImportResult();
         $count = $result->getSuccessfulCount();
@@ -62,7 +66,7 @@ class ImportResultTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($count, $result->getSuccessfulCount());
     }
 
-    public function testAddSkippedItem()
+    public function testAddSkippedItem(): void
     {
         $result = new ImportResult();
         $this->assertEquals(0, $result->getSkippedCount());
@@ -72,7 +76,7 @@ class ImportResultTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($item, $result->getSkippedItems());
     }
 
-    public function testAddWrongItems()
+    public function testAddWrongItems(): void
     {
         $result = new ImportResult();
         $this->assertEquals(0, $result->getSkippedCount());
