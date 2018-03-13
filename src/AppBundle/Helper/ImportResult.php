@@ -79,7 +79,7 @@ class ImportResult
      */
     public function addSkippedItem(array $row): void
     {
-        if ($row != null) {
+        if ($row !== null) {
             $this->skippedItems[] = implode(',', $row);
         }
     }
